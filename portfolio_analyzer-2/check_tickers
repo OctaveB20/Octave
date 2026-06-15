@@ -1,0 +1,37 @@
+"""Run this script to find the correct Yahoo Finance ticker for each holding."""
+import yfinance as yf
+
+CANDIDATES = {
+    "FLXT": ["FLXT.AS", "FLXT.L", "FLXT.SW", "FLXT.DE"],
+    "JEDI": ["JEDI.AS", "JEDI.L", "JEDI.DE", "JEDI.SW"],
+    "LEMA": ["LEMA.PA", "LEMA.AS", "LEMA.L", "LEM.SW"],
+    "IGLD": ["IGLD.L", "IGLD.AS", "IGLD.DE"],
+    "BNP":  ["BNP.PA", "BNP.AS", "BNP.DE"],
+    "EUDF": ["EUDF.AS", "EUDF.L", "EUDF.DE"],
+    "QDVE": ["QDVE.DE", "QDVE.AS", "QDVE.L", "QDVE.SW"],
+    "DBXJ": ["DBXJ.DE", "DBXJ.AS", "DBXJ.L"],
+    "KTOS": ["KTOS"],
+    "OTLK": ["OTLK"],
+    "NVNO": ["NVNO"],
+    "CRWD": ["CRWD"],
+    "GOOGL":["GOOGL"],
+    "VWCE": ["VWCE.AS", "VWCE.L", "VWCE.DE"],
+    "VUAA": ["VUAA.AS", "VUAA.L", "VUAA.DE"],
+}
+
+print(f"{'Base':<8} {'Working ticker':<16} {'Price'}")
+print("-" * 40)
+for base, candidates in CANDIDATES.items():
+    found = False
+    for t in candidates:
+        try:
+            hist = yf.Ticker(t).history(period="5d")
+            if not hist.empty:
+                price = hist["Close"].iloc[-1]
+                print(f"{base:<8} {t:<16} {price:.4f}")
+                found = True
+                break
+        except Exception:
+            pass
+    if not found:
+        print(f"{base:<8} {'NOT FOUND':<16} —")
