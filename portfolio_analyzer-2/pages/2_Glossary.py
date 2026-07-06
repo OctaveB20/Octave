@@ -92,8 +92,10 @@ def bollinger_fig(height=170):
 def range_fig(low, high, cur, height=110):
     pct = (cur - low) / (high - low) * 100 if high != low else 50
     fig = go.Figure(go.Bar(x=[pct], y=["52w"], orientation="h", marker_color=BLUE, width=0.5))
-    fig.update_layout(**PLOTLY_LAYOUT, height=height, showlegend=False,
-                       xaxis=dict(range=[0, 100], gridcolor="#21262d"), yaxis=dict(showticklabels=False))
+    layout = {**PLOTLY_LAYOUT, "height": height, "showlegend": False}
+    layout["xaxis"] = dict(range=[0, 100], gridcolor="#21262d")
+    layout["yaxis"] = dict(showticklabels=False)
+    fig.update_layout(**layout)
     return fig
 
 
