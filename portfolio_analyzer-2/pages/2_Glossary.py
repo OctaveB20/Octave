@@ -246,4 +246,4 @@ for title, desc, example_line, fig_fn in GLOSSARY:
             st.markdown(desc)
             st.caption(example_line)
         with c2:
-            st.plotly_chart(fig_fn(), width="stretch")
+            st.plotly_chart(fig_fn(), width="stretch", key=f"chart_{title}")
