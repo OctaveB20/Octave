@@ -1,8 +1,9 @@
-"""data.py — fetch and cache price data via yfinance (clean, no SSL bypass)."""
+"""data.py — fetch and cache price data via yfinance."""
 
 import yfinance as yf
 import pandas as pd
 import streamlit as st
+
 
 @st.cache_data(ttl=3600)
 def get_eur_usd() -> float:
@@ -15,16 +16,21 @@ def get_eur_usd() -> float:
         pass
     return 1.10  # fallback
 
-@st.cache_data(ttl=900)  # cache 15 min
+
+@st.cache_data(ttl=900)
 def fetch_ticker_data(ticker: str, period: str = "1y") -> pd.DataFrame:
     """Return OHLCV DataFrame for a ticker."""
     try:
         t = yf.Ticker(ticker)
         interval = "5m" if period == "1d" else "1h" if period == "5d" else "1d"
-        df = t.history(period=period, interval=interval, auto_adjust=True)        
+        df = t.history(period=period, interval=interval, auto_adjust=True)
         if df.empty:
             return pd.DataFrame()
-        df.index = pd.to_datetime(df.index).tz_localize(None)
+        # Handle both tz-aware and tz-naive indexes
+        if df.index.tz is not None:
+            df.index = df.index.tz_convert(None)
+        else:
+            df.index = pd.to_datetime(df.index)
         return df[["Open", "High", "Low", "Close", "Volume"]]
     except Exception:
         return pd.DataFrame()
@@ -72,36 +78,35 @@ def build_portfolio_snapshot(holdings: list, period: str = "1y") -> pd.DataFrame
         if current_price is None:
             current_price = h["avg_price"]
 
-        # Detect USD tickers (no exchange suffix = US market)
+        # USD tickers have no exchange suffix (.AS, .DE, .PA, .L, .MI...)
         is_usd = "." not in ticker
 
-        if is_usd:
-            current_price_eur = current_price / eur_usd
-            avg_price_eur = h["avg_price"] / eur_usd
-        else:
-            current_price_eur = current_price
-            avg_price_eur = h["avg_price"]
+        # current_price is in native currency → convert USD to EUR
+        current_price_eur = current_price / eur_usd if is_usd else current_price
 
-        cost_basis = avg_price_eur * h["shares"]
+        # avg_price is ALWAYS in EUR as entered by the user — never convert it
+        avg_price_eur = h["avg_price"]
+
+        cost_basis   = avg_price_eur * h["shares"]
         market_value = current_price_eur * h["shares"]
-
-        pnl_abs = market_value - cost_basis
-        pnl_pct = (pnl_abs / cost_basis) * 100 if cost_basis else 0
+        pnl_abs      = market_value - cost_basis
+        pnl_pct      = (pnl_abs / cost_basis) * 100 if cost_basis else 0
 
         rows.append({
-            "Ticker":        ticker,
-            "Name":          h["name"],
-            "Category":      h["category"],
-            "Shares":        h["shares"],
-            "Avg Price": round(avg_price_eur, 4),
-            "Current Price": round(current_price_eur, 4),
+            "Ticker":                 ticker,
+            "Name":                   h["name"],
+            "Category":               h["category"],
+            "Shares":                 h["shares"],
+            "Avg Price":              round(avg_price_eur, 4),
+            "Current Price":          round(current_price_eur, 4),
             "Current Price (native)": round(current_price, 4),
-            "Currency":      "USD" if is_usd else "EUR",
-            "Cost Basis":    cost_basis,
-            "Market Value":  market_value,
-            "P&L (€)":       pnl_abs,
-            "P&L (%)":       pnl_pct,
+            "Currency":               "USD" if is_usd else "EUR",
+            "Cost Basis":             cost_basis,
+            "Market Value":           market_value,
+            "P&L (€)":                pnl_abs,
+            "P&L (%)":                pnl_pct,
         })
+
     df = pd.DataFrame(rows)
     df["Weight (%)"] = (df["Market Value"] / df["Market Value"].sum()) * 100
     return df
