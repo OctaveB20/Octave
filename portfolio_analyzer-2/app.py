@@ -34,10 +34,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
-
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-
-/* Metric cards */
 [data-testid="metric-container"] {
     background: #0d1117;
     border: 1px solid #21262d;
@@ -56,22 +53,11 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     color: #8b949e !important;
 }
 [data-testid="stMetricDelta"] { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; }
-
-/* Sidebar */
 section[data-testid="stSidebar"] { background: #010409; border-right: 1px solid #21262d; }
-
-/* Header */
 h1 { font-family: 'IBM Plex Mono', monospace; font-size: 1.6rem !important; letter-spacing: -0.02em; }
 h2, h3 { font-weight: 500; color: #c9d1d9; }
-
-/* Divider */
 hr { border-color: #21262d; }
-
-/* Dataframe */
 [data-testid="stDataFrame"] { border: 1px solid #21262d; border-radius: 6px; }
-
-/* Positive / negative color util */
-.pos { color: #3fb950; } .neg { color: #f85149; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -109,37 +95,37 @@ cfg = load_config()
 
 with st.sidebar:
     st.markdown("## ⚙️ Portfolio")
-    period = st.selectbox("Period", ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y"], index=4)
+    period = st.selectbox("Period", ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y"], index=4, key="sb_period")
     st.markdown("---")
     st.markdown("### Holdings")
 
     edited_holdings = []
     for i, h in enumerate(cfg["holdings"]):
         with st.expander(f"{h['ticker']} · {h['category']}", expanded=False):
-            name     = st.text_input("Name",       h["name"],       key=f"name_{i}")
-            ticker   = st.text_input("Ticker",     h["ticker"],     key=f"tick_{i}")
-            cat      = st.selectbox("Category",
-                                    ["Core ETF","Equity","Satellite","Speculative"],
-                                    index=["Core ETF","Equity","Satellite","Speculative"].index(h["category"]),
-                                    key=f"cat_{i}")
-            shares   = st.number_input("Shares",   value=float(h["shares"]),    min_value=0.0, step=0.01, key=f"sh_{i}")
-            avg_price= st.number_input("Avg Price",value=float(h["avg_price"]), min_value=0.0, step=0.01, key=f"pr_{i}")
+            name      = st.text_input("Name",      h["name"],            key=f"sb_name_{i}")
+            ticker    = st.text_input("Ticker",    h["ticker"],          key=f"sb_tick_{i}")
+            cat       = st.selectbox("Category",
+                                     ["Core ETF","Equity","Satellite","Speculative"],
+                                     index=["Core ETF","Equity","Satellite","Speculative"].index(h["category"]),
+                                     key=f"sb_cat_{i}")
+            shares    = st.number_input("Shares",    value=float(h["shares"]),    min_value=0.0, step=0.01, key=f"sb_sh_{i}")
+            avg_price = st.number_input("Avg Price", value=float(h["avg_price"]), min_value=0.0, step=0.01, key=f"sb_pr_{i}")
             edited_holdings.append({"ticker": ticker, "name": name, "shares": shares,
                                      "avg_price": avg_price, "category": cat})
 
     st.markdown("---")
-    if st.button("＋ Add holding"):
+    if st.button("＋ Add holding", key="sb_add"):
         cfg["holdings"].append({"ticker": "NEW", "name": "New Position",
                                  "shares": 1, "avg_price": 1.0, "category": "Equity"})
         save_config(cfg)
         st.rerun()
 
-    if st.button("💾 Save changes"):
+    if st.button("💾 Save changes", key="sb_save"):
         cfg["holdings"] = edited_holdings
         save_config(cfg)
         st.success("Saved!")
 
-    benchmark_ticker = st.text_input("Benchmark", cfg.get("benchmark", "VWCE.AS"))
+    benchmark_ticker = st.text_input("Benchmark", cfg.get("benchmark", "VWCE.AS"), key="sb_bench")
 
 # ── Fetch all data ────────────────────────────────────────────────────────────
 
@@ -157,14 +143,14 @@ with st.spinner("Fetching market data…"):
     bench_df = fetch_ticker_data(benchmark_ticker, period)
     bench_prices = bench_df["Close"] if not bench_df.empty else None
 
-# ── Compute stats for all tickers ─────────────────────────────────────────────
+# ── Stats ─────────────────────────────────────────────────────────────────────
 
 all_stats = []
 for h in holdings:
     ps = price_series.get(h["ticker"])
     if ps is not None and len(ps) > 5:
         s = full_stats(ps, bench_prices, label=h["ticker"])
-        s["Name"] = h["name"]
+        s["Name"]     = h["name"]
         s["Category"] = h["category"]
         all_stats.append(s)
 
@@ -172,21 +158,20 @@ stats_df = pd.DataFrame(all_stats) if all_stats else pd.DataFrame()
 
 # ── Header ────────────────────────────────────────────────────────────────────
 
-total_cost   = snapshot["Cost Basis"].sum()
-total_value  = snapshot["Market Value"].sum()
-total_pnl    = total_value - total_cost
+total_cost    = snapshot["Cost Basis"].sum()
+total_value   = snapshot["Market Value"].sum()
+total_pnl     = total_value - total_cost
 total_pnl_pct = (total_pnl / total_cost * 100) if total_cost else 0
 
 st.markdown("# portfolio_analyzer")
 st.caption(f"Data via Yahoo Finance · ~15 min delay · {period} window")
 st.markdown("---")
 
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Portfolio Value", f"€{total_value:,.2f}", f"€{total_pnl:+,.2f}")
-col2.metric("Total P&L", f"{total_pnl_pct:+.2f}%",
-            "vs cost basis")
-col3.metric("Positions", str(len(holdings)))
-col4.metric("Period", period)
+hdr1, hdr2, hdr3, hdr4 = st.columns(4)
+hdr1.metric("Portfolio Value", f"€{total_value:,.2f}", f"€{total_pnl:+,.2f}")
+hdr2.metric("Total P&L", f"{total_pnl_pct:+.2f}%", "vs cost basis")
+hdr3.metric("Positions", str(len(holdings)))
+hdr4.metric("Period", period)
 
 # ── TABS ──────────────────────────────────────────────────────────────────────
 
@@ -201,19 +186,13 @@ tab_overview, tab_individual, tab_risk, tab_correlations, tab_fundamentals = st.
 with tab_overview:
     st.markdown("### Portfolio Snapshot")
 
-    # Color P&L columns
-    def color_pnl(val):
-        if isinstance(val, (int, float)):
-            return f"color: {GREEN}" if val >= 0 else f"color: {RED}"
-        return ""
-
     display_df = snapshot.copy()
     display_df["Cost Basis"]    = display_df["Cost Basis"].map("€{:,.2f}".format)
     display_df["Market Value"]  = display_df["Market Value"].map("€{:,.2f}".format)
     display_df["Avg Price"]     = display_df["Avg Price"].map("{:.4f}".format)
     display_df["Current Price"] = display_df.apply(
-    lambda r: f"{r['Current Price (native)']} {r['Currency']} → €{r['Current Price']}", axis=1
-)
+        lambda r: f"{r['Current Price (native)']} {r['Currency']} → €{r['Current Price']}", axis=1
+    )
     display_df["Weight (%)"]    = display_df["Weight (%)"].map("{:.1f}%".format)
     display_df["P&L (%)"]       = display_df["P&L (%)"].map("{:+.2f}%".format)
     display_df["P&L (€)"]       = display_df["P&L (€)"].map("€{:+,.2f}".format)
@@ -225,31 +204,29 @@ with tab_overview:
     )
 
     st.markdown("---")
-    c1, c2 = st.columns(2)
+    ov_col1, ov_col2 = st.columns(2)
 
-    # Donut — allocation by value
-    with c1:
+    with ov_col1:
         st.markdown("#### Allocation by market value")
         fig = px.pie(snapshot, names="Ticker", values="Market Value",
                      hole=0.55, color_discrete_sequence=px.colors.qualitative.Set2)
         fig.update_traces(textposition="outside", textinfo="label+percent")
         fig.update_layout(**PLOTLY_LAYOUT, showlegend=False, height=340)
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="ov_pie")
 
-    # Bar — P&L % per position
-    with c2:
+    with ov_col2:
         st.markdown("#### P&L per position (%)")
         df_sorted = snapshot.sort_values("P&L (%)")
-        colors = [GREEN if v >= 0 else RED for v in df_sorted["P&L (%)"]]
+        bar_colors = [GREEN if v >= 0 else RED for v in df_sorted["P&L (%)"]]
         fig = go.Figure(go.Bar(
             x=df_sorted["Ticker"], y=df_sorted["P&L (%)"],
-            marker_color=colors, text=df_sorted["P&L (%)"].map("{:+.1f}%".format),
+            marker_color=bar_colors,
+            text=df_sorted["P&L (%)"].map("{:+.1f}%".format),
             textposition="outside",
         ))
         fig.update_layout(**PLOTLY_LAYOUT, height=340, yaxis_title="P&L %")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="ov_pnl_bar")
 
-    # Category breakdown
     st.markdown("#### Category breakdown")
     cat_df = snapshot.groupby("Category").agg(
         Value=("Market Value", "sum"),
@@ -259,13 +236,11 @@ with tab_overview:
     cat_df["Weight"] = (cat_df["Value"] / cat_df["Value"].sum() * 100).map("{:.1f}%".format)
     cat_df["Value"]  = cat_df["Value"].map("€{:,.2f}".format)
     cat_df["PnL"]    = cat_df["PnL"].map("€{:+,.2f}".format)
-    st.dataframe(cat_df, width="stretch", hide_index=True)
+    st.dataframe(cat_df, width="stretch", hide_index=True, key="ov_cat_table")
 
-    # Portfolio cumulative return vs benchmark
     if price_series:
         st.markdown("#### Cumulative return vs benchmark")
         fig = go.Figure()
-        # Portfolio (equal-weighted for visual — weighted by value would need rebalance data)
         port_returns = pd.DataFrame({k: daily_returns(v) for k, v in price_series.items()})
         weights_raw = snapshot.set_index("Ticker")["Market Value"]
         common_tickers = [t for t in port_returns.columns if t in weights_raw.index]
@@ -276,17 +251,15 @@ with tab_overview:
             port_cum = (1 + weighted_ret).cumprod() - 1
             fig.add_trace(go.Scatter(x=port_cum.index, y=port_cum * 100,
                                      name="Portfolio", line=dict(color=BLUE, width=2)))
-
         if bench_prices is not None:
             bench_ret = daily_returns(bench_prices)
             bench_cum = (1 + bench_ret).cumprod() - 1
             fig.add_trace(go.Scatter(x=bench_cum.index, y=bench_cum * 100,
-                                     name=benchmark_ticker, line=dict(color=AMBER, width=1.5, dash="dash")))
-
+                                     name=benchmark_ticker,
+                                     line=dict(color=AMBER, width=1.5, dash="dash")))
         fig.update_layout(**PLOTLY_LAYOUT, height=340,
                           yaxis_title="Cumulative Return (%)", hovermode="x unified")
-        st.plotly_chart(fig, width="stretch")
-
+        st.plotly_chart(fig, width="stretch", key="ov_cumret")
 
 # ════════════════════════════════════════════════════════════════════════════════
 # TAB 2 — INDIVIDUAL DEEP DIVE
@@ -297,60 +270,54 @@ with tab_individual:
         "Select position",
         options=[h["ticker"] for h in holdings],
         format_func=lambda t: f"{t} · {next((h['name'] for h in holdings if h['ticker']==t), t)}",
+        key="dd_ticker_select",
     )
 
-    ps = price_series.get(ticker_choice)
+    ps      = price_series.get(ticker_choice)
     holding = next((h for h in holdings if h["ticker"] == ticker_choice), None)
 
     if ps is None or holding is None:
         st.warning("No price data available for this ticker.")
     else:
-        s = full_stats(ps, bench_prices, label=ticker_choice)
+        s  = full_stats(ps, bench_prices, label=ticker_choice)
         fw = fifty_two_week_position(ps)
 
-        # KPI row
-        kpi_cols = st.columns(5)
-        kpi_cols[0].metric("Total Return",  f"{s['Total Return (%)']:+.2f}%")
-        kpi_cols[1].metric("Ann. Return",   f"{s['Ann. Return (%)']:+.2f}%")
-        kpi_cols[2].metric("Sharpe",        f"{s['Sharpe']:.2f}")
-        kpi_cols[3].metric("Max Drawdown",  f"{s['Max Drawdown (%)']:.2f}%")
-        kpi_cols[4].metric("Volatility",    f"{s['Volatility (%)']:.2f}%")
+        dd_kpi1 = st.columns(5)
+        dd_kpi1[0].metric("Total Return", f"{s['Total Return (%)']:+.2f}%")
+        dd_kpi1[1].metric("Ann. Return",  f"{s['Ann. Return (%)']:+.2f}%")
+        dd_kpi1[2].metric("Sharpe",       f"{s['Sharpe']:.2f}")
+        dd_kpi1[3].metric("Max Drawdown", f"{s['Max Drawdown (%)']:.2f}%")
+        dd_kpi1[4].metric("Volatility",   f"{s['Volatility (%)']:.2f}%")
 
-        kpi2 = st.columns(4)
-        kpi2[0].metric("Sortino",           f"{s['Sortino']:.2f}")
-        kpi2[1].metric("Calmar",            f"{s['Calmar']:.2f}")
-        kpi2[2].metric("Beta",              f"{s['Beta']:.2f}" if s['Beta'] else "—")
-        kpi2[3].metric("Alpha (ann.)",      f"{s['Alpha (ann. %)']:+.2f}%" if s['Alpha (ann. %)'] else "—")
+        dd_kpi2 = st.columns(4)
+        dd_kpi2[0].metric("Sortino",      f"{s['Sortino']:.2f}")
+        dd_kpi2[1].metric("Calmar",       f"{s['Calmar']:.2f}")
+        dd_kpi2[2].metric("Beta",         f"{s['Beta']:.2f}" if s['Beta'] else "—")
+        dd_kpi2[3].metric("Alpha (ann.)", f"{s['Alpha (ann. %)']:+.2f}%" if s['Alpha (ann. %)'] else "—")
 
-        # 52-week bar
         if fw:
             st.markdown("#### 52-week range")
-            pct = fw["position_pct"]
-            bar_color = GREEN if pct > 50 else RED
-            st.progress(int(pct))
-            st.caption(f"Low: {fw['52w_low']}  ·  Current: {fw['current']}  ·  High: {fw['52w_high']}  ·  Position: {pct:.0f}%ile")
+            st.progress(int(fw["position_pct"]))
+            st.caption(f"Low: {fw['52w_low']}  ·  Current: {fw['current']}  ·  High: {fw['52w_high']}  ·  Position: {fw['position_pct']:.0f}%ile")
 
         st.markdown("---")
 
-        # Price + Bollinger
         st.markdown("#### Price · Bollinger Bands (20, 2σ)")
         upper, mid, lower = bollinger_bands(ps)
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=ps.index, y=upper, name="Upper", line=dict(color=RED, width=1, dash="dot")))
+        fig.add_trace(go.Scatter(x=ps.index, y=upper, name="Upper", line=dict(color=RED,   width=1, dash="dot")))
         fig.add_trace(go.Scatter(x=ps.index, y=mid,   name="MA20",  line=dict(color=AMBER, width=1)))
         fig.add_trace(go.Scatter(x=ps.index, y=lower, name="Lower", line=dict(color=GREEN, width=1, dash="dot"),
                                  fill="tonexty", fillcolor="rgba(63,185,80,0.05)"))
-        fig.add_trace(go.Scatter(x=ps.index, y=ps,    name="Price", line=dict(color=BLUE, width=2)))
-        # Mark avg price
+        fig.add_trace(go.Scatter(x=ps.index, y=ps,    name="Price", line=dict(color=BLUE,  width=2)))
         fig.add_hline(y=holding["avg_price"], line=dict(color=AMBER, dash="dash", width=1),
                       annotation_text=f"PRU {holding['avg_price']}", annotation_position="right")
         fig.update_layout(**PLOTLY_LAYOUT, height=340, yaxis_title="Price")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="dd_bollinger")
 
-        c1, c2 = st.columns(2)
+        dd_col1, dd_col2 = st.columns(2)
 
-        # RSI
-        with c1:
+        with dd_col1:
             st.markdown("#### RSI (14)")
             rsi_series = rsi(ps)
             fig = go.Figure()
@@ -362,7 +329,7 @@ with tab_individual:
             fig.add_hline(y=30, line=dict(color=GREEN, width=0.8, dash="dot"))
             fig.update_layout(**PLOTLY_LAYOUT, height=260)
             fig.update_yaxes(range=[0, 100], gridcolor="#21262d")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key="dd_rsi")
             rsi_now = rsi_series.iloc[-1]
             if rsi_now > 70:
                 st.warning(f"RSI {rsi_now:.0f} — overbought zone")
@@ -371,44 +338,43 @@ with tab_individual:
             else:
                 st.info(f"RSI {rsi_now:.0f} — neutral")
 
-        # MACD
-        with c2:
+        with dd_col2:
             st.markdown("#### MACD (12/26/9)")
             macd_line, signal_line, histogram = macd(ps)
-            fig = make_subplots(rows=2, cols=1, row_heights=[0.6, 0.4], shared_xaxes=True, vertical_spacing=0.05)
-            fig.add_trace(go.Scatter(x=ps.index, y=ps, name="Price", line=dict(color=BLUE, width=1.5)), row=1, col=1)
-            fig.add_trace(go.Scatter(x=macd_line.index, y=macd_line,   name="MACD",   line=dict(color=BLUE,  width=1.5)), row=2, col=1)
-            fig.add_trace(go.Scatter(x=signal_line.index, y=signal_line, name="Signal", line=dict(color=AMBER, width=1.5)), row=2, col=1)
+            fig = make_subplots(rows=2, cols=1, row_heights=[0.6, 0.4],
+                                shared_xaxes=True, vertical_spacing=0.05)
+            fig.add_trace(go.Scatter(x=ps.index, y=ps, name="Price",
+                                     line=dict(color=BLUE, width=1.5)), row=1, col=1)
+            fig.add_trace(go.Scatter(x=macd_line.index,   y=macd_line,   name="MACD",
+                                     line=dict(color=BLUE,  width=1.5)), row=2, col=1)
+            fig.add_trace(go.Scatter(x=signal_line.index, y=signal_line, name="Signal",
+                                     line=dict(color=AMBER, width=1.5)), row=2, col=1)
             hist_colors = [GREEN if v >= 0 else RED for v in histogram]
             fig.add_trace(go.Bar(x=histogram.index, y=histogram, name="Hist",
                                  marker_color=hist_colors, opacity=0.6), row=2, col=1)
             fig.update_layout(**PLOTLY_LAYOUT, height=300, showlegend=False)
             fig.update_yaxes(gridcolor="#21262d")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key="dd_macd")
 
-        # Drawdown
         st.markdown("#### Drawdown from peak")
-        dd = drawdown_series(ps)
-        fig = go.Figure(go.Scatter(x=dd.index, y=dd, fill="tozeroy",
+        dd_series = drawdown_series(ps)
+        fig = go.Figure(go.Scatter(x=dd_series.index, y=dd_series, fill="tozeroy",
                                    fillcolor="rgba(248,81,73,0.15)",
                                    line=dict(color=RED, width=1.5)))
         fig.update_layout(**PLOTLY_LAYOUT, height=240, yaxis_title="Drawdown %")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="dd_drawdown")
 
-        # Z-score
         st.markdown("#### Rolling Z-score (20d) — mean reversion signal")
         z = zscore(ps)
-        colors_z = [GREEN if v < -1.5 else RED if v > 1.5 else BLUE for v in z]
         fig = go.Figure(go.Scatter(x=z.index, y=z, line=dict(color=BLUE, width=1.5)))
-        fig.add_hline(y=2,  line=dict(color=RED,   dash="dot", width=1))
-        fig.add_hline(y=-2, line=dict(color=GREEN, dash="dot", width=1))
+        fig.add_hline(y=2,  line=dict(color=RED,      dash="dot", width=1))
+        fig.add_hline(y=-2, line=dict(color=GREEN,    dash="dot", width=1))
         fig.add_hline(y=0,  line=dict(color="#8b949e", width=0.5))
         fig.update_layout(**PLOTLY_LAYOUT, height=240, yaxis_title="Z-score")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="dd_zscore")
         z_now = z.iloc[-1]
         if abs(z_now) > 2:
             st.warning(f"Z-score = {z_now:.2f} → price significantly {'above' if z_now>0 else 'below'} recent average")
-
 
 # ════════════════════════════════════════════════════════════════════════════════
 # TAB 3 — RISK
@@ -421,14 +387,13 @@ with tab_risk:
         risk_cols = ["Ticker","Name","Category","Volatility (%)","Max Drawdown (%)",
                      "Sharpe","Sortino","Calmar","VaR 95% (daily %)","Beta","Alpha (ann. %)"]
         st.dataframe(stats_df[[c for c in risk_cols if c in stats_df.columns]],
-                     width="stretch", hide_index=True)
+                     width="stretch", hide_index=True, key="risk_table")
 
     st.markdown("---")
-    c1, c2 = st.columns(2)
+    risk_col1, risk_col2 = st.columns(2)
 
-    # Sharpe vs Volatility scatter
     if not stats_df.empty:
-        with c1:
+        with risk_col1:
             st.markdown("#### Risk / Return scatter")
             fig = px.scatter(
                 stats_df, x="Volatility (%)", y="Ann. Return (%)",
@@ -441,23 +406,23 @@ with tab_risk:
             fig.update_traces(textposition="top center")
             fig.add_hline(y=0, line=dict(color="#8b949e", width=0.8, dash="dot"))
             fig.update_layout(**PLOTLY_LAYOUT, height=360)
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key="risk_scatter")
 
-        with c2:
+        with risk_col2:
             st.markdown("#### Sharpe ratio by position")
             df_s = stats_df.sort_values("Sharpe")
-            colors = [GREEN if v >= 1 else AMBER if v >= 0 else RED for v in df_s["Sharpe"]]
+            sharpe_colors = [GREEN if v >= 1 else AMBER if v >= 0 else RED for v in df_s["Sharpe"]]
             fig = go.Figure(go.Bar(
                 x=df_s["Sharpe"], y=df_s["Ticker"], orientation="h",
-                marker_color=colors, text=df_s["Sharpe"].map("{:.2f}".format),
+                marker_color=sharpe_colors,
+                text=df_s["Sharpe"].map("{:.2f}".format),
                 textposition="outside",
             ))
             fig.add_vline(x=1, line=dict(color=GREEN, dash="dot", width=1))
-            fig.add_vline(x=0, line=dict(color=RED, dash="dot", width=1))
+            fig.add_vline(x=0, line=dict(color=RED,   dash="dot", width=1))
             fig.update_layout(**PLOTLY_LAYOUT, height=360, xaxis_title="Sharpe ratio")
-            st.plotly_chart(fig, width="stretch")
+            st.plotly_chart(fig, width="stretch", key="risk_sharpe")
 
-    # Max drawdown comparison
     if not stats_df.empty:
         st.markdown("#### Max drawdown by position")
         df_d = stats_df.sort_values("Max Drawdown (%)")
@@ -468,19 +433,17 @@ with tab_risk:
             textposition="outside",
         ))
         fig.update_layout(**PLOTLY_LAYOUT, height=300, yaxis_title="Max Drawdown %")
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="risk_mdd")
 
-    # VaR summary
-    if not stats_df.empty:
-        st.markdown("#### Value at Risk (95%, daily) — worst expected daily loss 95% of the time")
+        st.markdown("#### Value at Risk (95%, daily)")
         fig = go.Figure(go.Bar(
             x=stats_df["Ticker"], y=stats_df["VaR 95% (daily %)"],
-            marker_color=AMBER, text=stats_df["VaR 95% (daily %)"].map("{:.2f}%".format),
+            marker_color=AMBER,
+            text=stats_df["VaR 95% (daily %)"].map("{:.2f}%".format),
             textposition="outside",
         ))
         fig.update_layout(**PLOTLY_LAYOUT, height=280)
-        st.plotly_chart(fig, width="stretch")
-
+        st.plotly_chart(fig, width="stretch", key="risk_var")
 
 # ════════════════════════════════════════════════════════════════════════════════
 # TAB 4 — CORRELATIONS
@@ -495,31 +458,25 @@ with tab_correlations:
             z=corr.values,
             x=corr.columns.tolist(),
             y=corr.index.tolist(),
-            colorscale=[
-                [0.0,  "#f85149"],
-                [0.5,  "#0d1117"],
-                [1.0,  "#3fb950"],
-            ],
+            colorscale=[[0.0, "#f85149"], [0.5, "#0d1117"], [1.0, "#3fb950"]],
             zmid=0, zmin=-1, zmax=1,
             text=corr.round(2).values,
             texttemplate="%{text}",
             hoverongaps=False,
         ))
         fig.update_layout(**PLOTLY_LAYOUT, height=520)
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, width="stretch", key="corr_heatmap")
 
         st.markdown("#### Insights")
-        # Find highest / lowest correlations (excluding diagonal)
-        corr_vals = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
+        corr_vals  = corr.where(np.triu(np.ones(corr.shape), k=1).astype(bool))
         corr_stack = corr_vals.stack().sort_values()
         if not corr_stack.empty:
-            most_neg = corr_stack.iloc[0]
             most_pos = corr_stack.iloc[-1]
+            most_neg = corr_stack.iloc[0]
             st.info(f"**Most correlated pair:** {corr_stack.index[-1][0]} × {corr_stack.index[-1][1]} → {most_pos:.2f}")
             st.info(f"**Least correlated pair:** {corr_stack.index[0][0]} × {corr_stack.index[0][1]} → {most_neg:.2f}")
     else:
         st.info("Need at least 2 positions with data to build a correlation matrix.")
-
 
 # ════════════════════════════════════════════════════════════════════════════════
 # TAB 5 — FUNDAMENTALS
@@ -532,7 +489,7 @@ with tab_fundamentals:
         "Select position",
         options=[h["ticker"] for h in holdings],
         format_func=lambda t: f"{t} · {next((h['name'] for h in holdings if h['ticker']==t), t)}",
-        key="fund_select",
+        key="fund_ticker_select",
     )
 
     with st.spinner("Loading fundamentals…"):
@@ -541,40 +498,34 @@ with tab_fundamentals:
     if not any(v is not None for v in fund.values()):
         st.info("No fundamental data available for this ticker (common for ETFs).")
     else:
-        cols = st.columns(3)
+        fund_cols = st.columns(3)
         metrics = [
-            ("Trailing P/E",    fund.get("trailingPE"),     None),
-            ("Forward P/E",     fund.get("forwardPE"),      None),
-            ("Price / Book",    fund.get("priceToBook"),    None),
-            ("Dividend Yield",  fund.get("dividendYield"),  "%"),
-            ("Beta",            fund.get("beta"),           None),
-            ("ROE",             fund.get("returnOnEquity"), "%"),
-            ("52W Change",      fund.get("52WeekChange"),   "%"),
-            ("Short Ratio",     fund.get("shortRatio"),     None),
-            ("EPS (trailing)",  fund.get("trailingEps"),    None),
+            ("Trailing P/E",   fund.get("trailingPE"),     None),
+            ("Forward P/E",    fund.get("forwardPE"),      None),
+            ("Price / Book",   fund.get("priceToBook"),    None),
+            ("Dividend Yield", fund.get("dividendYield"),  "%"),
+            ("Beta",           fund.get("beta"),           None),
+            ("ROE",            fund.get("returnOnEquity"), "%"),
+            ("52W Change",     fund.get("52WeekChange"),   "%"),
+            ("Short Ratio",    fund.get("shortRatio"),     None),
+            ("EPS (trailing)", fund.get("trailingEps"),    None),
         ]
         for i, (label, val, suffix) in enumerate(metrics):
             if val is not None:
-                if suffix == "%":
-                    display = f"{val*100:.2f}%"
-                else:
-                    display = f"{val:.2f}"
-                cols[i % 3].metric(label, display)
+                display = f"{val*100:.2f}%" if suffix == "%" else f"{val:.2f}"
+                fund_cols[i % 3].metric(label, display)
 
         if fund.get("sector"):
             st.caption(f"Sector: **{fund.get('sector')}**   ·   Industry: {fund.get('industry','—')}")
-
         if fund.get("marketCap"):
             mc = fund["marketCap"]
-            label = f"${mc/1e9:.1f}B" if mc >= 1e9 else f"${mc/1e6:.0f}M"
-            st.caption(f"Market cap: **{label}**")
+            st.caption(f"Market cap: **{'${:.1f}B'.format(mc/1e9) if mc >= 1e9 else '${:.0f}M'.format(mc/1e6)}**")
 
-        # 52-week range
         low  = fund.get("fiftyTwoWeekLow")
         high = fund.get("fiftyTwoWeekHigh")
         cur  = fetch_current_price(fund_ticker)
         if low and high and cur:
             pct = (cur - low) / (high - low) * 100 if high != low else 50
-            st.markdown("#### 52-week range (Yahoo fundamental)")
+            st.markdown("#### 52-week range")
             st.progress(int(pct))
             st.caption(f"Low: {low}  ·  Current: {cur}  ·  High: {high}")
