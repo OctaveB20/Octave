@@ -295,28 +295,28 @@ with tab_individual:
         dd_kpi2[2].metric("Beta",         f"{s['Beta']:.2f}" if s['Beta'] else "—")
         dd_kpi2[3].metric("Alpha (ann.)", f"{s['Alpha (ann. %)']:+.2f}%" if s['Alpha (ann. %)'] else "—")
 
-if fw:
-    position_pct = fw.get("position_pct")
+        if fw:
+            position_pct = fw.get("position_pct")
 
-    if pd.notna(position_pct):
+            if pd.notna(position_pct):
         # Streamlit progress expects a value between 0 and 100
-        position_pct = max(0, min(100, float(position_pct)))
+                position_pct = max(0, min(100, float(position_pct)))
 
-        st.markdown("#### 52-week range")
-        st.progress(int(position_pct))
-        st.caption(
-            f"Low: {fw['52w_low']}  ·  "
-            f"Current: {fw['current']}  ·  "
-            f"High: {fw['52w_high']}  ·  "
-            f"Position: {position_pct:.0f}%ile"
-        )
-    else:
-        st.markdown("#### 52-week range")
-        st.info("52-week position unavailable for this ticker.")
+                st.markdown("#### 52-week range")
+                st.progress(int(position_pct))
+                st.caption(
+                    f"Low: {fw['52w_low']}  ·  "
+                    f"Current: {fw['current']}  ·  "
+                    f"High: {fw['52w_high']}  ·  "
+                    f"Position: {position_pct:.0f}%ile"
+                )
+                else:
+                    st.markdown("#### 52-week range")
+                    st.info("52-week position unavailable for this ticker.")
 
-        st.markdown("---")
+                    st.markdown("---")
 
-        st.markdown("#### Price · Bollinger Bands (20, 2σ)")
+                    st.markdown("#### Price · Bollinger Bands (20, 2σ)")
         upper, mid, lower = bollinger_bands(ps)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=ps.index, y=upper, name="Upper", line=dict(color=RED,   width=1, dash="dot")))
