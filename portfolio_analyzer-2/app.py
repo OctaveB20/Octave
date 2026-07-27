@@ -143,7 +143,7 @@ with st.spinner("Fetching market data…"):
     bench_df = fetch_ticker_data(benchmark_ticker, period)
     bench_prices = bench_df["Close"] if not bench_df.empty else None
 
-# ── Stats ──────────────────────────────────────────────────────────────
+# ── Stats ─────────────────────────────────────────────────────────────
 
 all_stats = []
 for h in holdings:
@@ -156,7 +156,7 @@ for h in holdings:
 
 stats_df = pd.DataFrame(all_stats) if all_stats else pd.DataFrame()
 
-# ── Header ──────────────────────────────────────────────────────────────
+# ── Header ─────────────────────────────────────────────────────────────
 
 total_cost    = snapshot["Cost Basis"].sum()
 total_value   = snapshot["Market Value"].sum()
@@ -179,9 +179,9 @@ tab_overview, tab_individual, tab_risk, tab_correlations, tab_fundamentals = st.
     "📊 Overview", "🔍 Deep Dive", "⚡ Risk", "🔗 Correlations", "📋 Fundamentals"
 ])
 
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 # TAB 1 — OVERVIEW
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 
 with tab_overview:
     st.markdown("### Portfolio Snapshot")
@@ -261,9 +261,9 @@ with tab_overview:
                           yaxis_title="Cumulative Return (%)", hovermode="x unified")
         st.plotly_chart(fig, width="stretch", key="ov_cumret")
 
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 # TAB 2 — INDIVIDUAL DEEP DIVE
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 
 with tab_individual:
     ticker_choice = st.selectbox(
@@ -295,7 +295,7 @@ with tab_individual:
         dd_kpi2[2].metric("Beta",         f"{s['Beta']:.2f}" if s['Beta'] else "—")
         dd_kpi2[3].metric("Alpha (ann.)", f"{s['Alpha (ann. %)']:+.2f}%" if s['Alpha (ann. %)'] else "—")
 
-        if fw:
+        if fw is not None:
             position_pct = fw.get("position_pct")
 
             if pd.notna(position_pct):
@@ -390,9 +390,9 @@ with tab_individual:
         if abs(z_now) > 2:
             st.warning(f"Z-score = {z_now:.2f} → price significantly {'above' if z_now>0 else 'below'} recent average")
 
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 # TAB 3 — RISK
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 
 with tab_risk:
     st.markdown("### Risk metrics across all positions")
@@ -459,9 +459,9 @@ with tab_risk:
         fig.update_layout(**PLOTLY_LAYOUT, height=280)
         st.plotly_chart(fig, width="stretch", key="risk_var")
 
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 # TAB 4 — CORRELATIONS
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 
 with tab_correlations:
     st.markdown("### Correlation matrix — daily returns")
@@ -492,9 +492,9 @@ with tab_correlations:
     else:
         st.info("Need at least 2 positions with data to build a correlation matrix.")
 
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 # TAB 5 — FUNDAMENTALS
-# ════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════
 
 with tab_fundamentals:
     st.markdown("### Fundamental data (equities & ETFs)")
