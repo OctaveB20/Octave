@@ -295,7 +295,7 @@ with tab_individual:
         dd_kpi2[2].metric("Beta",         f"{s['Beta']:.2f}" if s['Beta'] else "—")
         dd_kpi2[3].metric("Alpha (ann.)", f"{s['Alpha (ann. %)']:+.2f}%" if s['Alpha (ann. %)'] else "—")
 
-        if fw:
+if fw:
     position_pct = fw.get("position_pct")
 
     if pd.notna(position_pct):
