@@ -19,7 +19,8 @@ from analytics import (
     correlation_matrix, fifty_two_week_position,
     volatility_annualised, total_return,
 )
-
+import time
+st.cache_data.clear()  # Clear cache on every run during debugging
 # ── Page config ───────────────────────────────────────────────────────────
 
 st.set_page_config(
