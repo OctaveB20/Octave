@@ -138,17 +138,19 @@ with st.spinner("Fetching market data…"):
     for h in holdings:
         df = fetch_ticker_data(h["ticker"], period)
         if not df.empty:
-            price_series[h["ticker"]] = df["Close"]
+            ps = df["Close"].dropna()  # Remove NaN values
+            if len(ps) > 0:  # Only add if we have at least 1 data point
+                price_series[h["ticker"]] = ps
 
     bench_df = fetch_ticker_data(benchmark_ticker, period)
-    bench_prices = bench_df["Close"] if not bench_df.empty else None
+    bench_prices = bench_df["Close"].dropna() if not bench_df.empty else None
 
 # ── Stats ─────────────────────────────────────────────────────────────
 
 all_stats = []
 for h in holdings:
     ps = price_series.get(h["ticker"])
-    if ps is not None and len(ps) > 5:
+    if ps is not None and len(ps) > 1:  # Need at least 2 data points for return calculation
         s = full_stats(ps, bench_prices, label=h["ticker"])
         s["Name"]     = h["name"]
         s["Category"] = h["category"]
