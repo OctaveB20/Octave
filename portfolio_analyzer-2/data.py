@@ -31,7 +31,10 @@ def fetch_ticker_data(ticker: str, period: str = "1y") -> pd.DataFrame:
             df.index = df.index.tz_convert(None)
         else:
             df.index = pd.to_datetime(df.index)
-        return df[["Open", "High", "Low", "Close", "Volume"]]
+        result = df[["Open", "High", "Low", "Close", "Volume"]].copy()
+        # Ensure Close column has no NaN values
+        result = result.dropna(subset=["Close"])
+        return result
     except Exception:
         return pd.DataFrame()
 
@@ -46,7 +49,9 @@ def fetch_current_price(ticker: str) -> float | None:
             return round(float(price), 4)
         hist = t.history(period="5d", auto_adjust=True)
         if not hist.empty:
-            return round(float(hist["Close"].iloc[-1]), 4)
+            close_prices = hist["Close"].dropna()
+            if not close_prices.empty:
+                return round(float(close_prices.iloc[-1]), 4)
     except Exception:
         pass
     return None
