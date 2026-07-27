@@ -20,7 +20,7 @@ from analytics import (
     volatility_annualised, total_return,
 )
 
-# ── Page config ─────────────────────────────────────────────────────────────[...]
+# ── Page config ───────────────────────────────────────────────────────────
 
 st.set_page_config(
     page_title="Portfolio Analyzer",
@@ -29,7 +29,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Theme / CSS ─────────────────────────────────────────────────────────────[...]
+# ── Theme / CSS ───────────────────────────────────────────────────────────
 
 st.markdown("""
 <style>
@@ -91,7 +91,7 @@ def save_config(cfg: dict):
 
 cfg = load_config()
 
-# ── Sidebar ─────────────────────────────────────────────────────────────[...]
+# ── Sidebar ───────────────────────────────────────────────────────────
 
 with st.sidebar:
     st.markdown("## ⚙️ Portfolio")
@@ -127,7 +127,7 @@ with st.sidebar:
 
     benchmark_ticker = st.text_input("Benchmark", cfg.get("benchmark", "VWCE.AS"), key="sb_bench")
 
-# ── Fetch all data ──────────────────────────────────────────────────────────[...]
+# ── Fetch all data ──────────────────────────────────────────────────────────
 
 holdings = cfg["holdings"]
 
@@ -143,7 +143,7 @@ with st.spinner("Fetching market data…"):
     bench_df = fetch_ticker_data(benchmark_ticker, period)
     bench_prices = bench_df["Close"] if not bench_df.empty else None
 
-# ── Stats ─────────────────────────────────────────────────────────────[...]
+# ── Stats ──────────────────────────────────────────────────────────────
 
 all_stats = []
 for h in holdings:
@@ -156,7 +156,7 @@ for h in holdings:
 
 stats_df = pd.DataFrame(all_stats) if all_stats else pd.DataFrame()
 
-# ── Header ─────────────────────────────────────────────────────────────[...]
+# ── Header ──────────────────────────────────────────────────────────────
 
 total_cost    = snapshot["Cost Basis"].sum()
 total_value   = snapshot["Market Value"].sum()
@@ -173,15 +173,15 @@ hdr2.metric("Total P&L", f"{total_pnl_pct:+.2f}%", "vs cost basis")
 hdr3.metric("Positions", str(len(holdings)))
 hdr4.metric("Period", period)
 
-# ── TABS ──────────────────────────────────────────────────────────────[...]
+# ── TABS ──────────────────────────────────────────────────────────────
 
 tab_overview, tab_individual, tab_risk, tab_correlations, tab_fundamentals = st.tabs([
     "📊 Overview", "🔍 Deep Dive", "⚡ Risk", "🔗 Correlations", "📋 Fundamentals"
 ])
 
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 # TAB 1 — OVERVIEW
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 
 with tab_overview:
     st.markdown("### Portfolio Snapshot")
@@ -261,9 +261,9 @@ with tab_overview:
                           yaxis_title="Cumulative Return (%)", hovermode="x unified")
         st.plotly_chart(fig, width="stretch", key="ov_cumret")
 
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 # TAB 2 — INDIVIDUAL DEEP DIVE
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 
 with tab_individual:
     ticker_choice = st.selectbox(
@@ -390,9 +390,9 @@ with tab_individual:
         if abs(z_now) > 2:
             st.warning(f"Z-score = {z_now:.2f} → price significantly {'above' if z_now>0 else 'below'} recent average")
 
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 # TAB 3 — RISK
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 
 with tab_risk:
     st.markdown("### Risk metrics across all positions")
@@ -459,9 +459,9 @@ with tab_risk:
         fig.update_layout(**PLOTLY_LAYOUT, height=280)
         st.plotly_chart(fig, width="stretch", key="risk_var")
 
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 # TAB 4 — CORRELATIONS
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 
 with tab_correlations:
     st.markdown("### Correlation matrix — daily returns")
@@ -492,9 +492,9 @@ with tab_correlations:
     else:
         st.info("Need at least 2 positions with data to build a correlation matrix.")
 
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 # TAB 5 — FUNDAMENTALS
-# ══════════════════════════════════════════════════════════════════[...]
+# ════════════════════════════════════════════════════════════════════
 
 with tab_fundamentals:
     st.markdown("### Fundamental data (equities & ETFs)")
