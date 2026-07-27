@@ -296,9 +296,23 @@ with tab_individual:
         dd_kpi2[3].metric("Alpha (ann.)", f"{s['Alpha (ann. %)']:+.2f}%" if s['Alpha (ann. %)'] else "—")
 
         if fw:
-            st.markdown("#### 52-week range")
-            st.progress(int(fw["position_pct"]))
-            st.caption(f"Low: {fw['52w_low']}  ·  Current: {fw['current']}  ·  High: {fw['52w_high']}  ·  Position: {fw['position_pct']:.0f}%ile")
+    position_pct = fw.get("position_pct")
+
+    if pd.notna(position_pct):
+        # Streamlit progress expects a value between 0 and 100
+        position_pct = max(0, min(100, float(position_pct)))
+
+        st.markdown("#### 52-week range")
+        st.progress(int(position_pct))
+        st.caption(
+            f"Low: {fw['52w_low']}  ·  "
+            f"Current: {fw['current']}  ·  "
+            f"High: {fw['52w_high']}  ·  "
+            f"Position: {position_pct:.0f}%ile"
+        )
+    else:
+        st.markdown("#### 52-week range")
+        st.info("52-week position unavailable for this ticker.")
 
         st.markdown("---")
 
