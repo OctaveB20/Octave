@@ -192,7 +192,10 @@ with tab_overview:
     display_df = snapshot.copy()
     display_df["Cost Basis"]    = display_df["Cost Basis"].map("€{:,.2f}".format)
     display_df["Market Value"]  = display_df["Market Value"].map("€{:,.2f}".format)
-    display_df["Avg Price"]     = display_df["Avg Price"].map("{:.4f}".format)
+    display_df["Avg Price"] = display_df.apply(
+    lambda r: f"{r['Avg Price']:.2f} {r['Currency']}",
+    axis=1
+)
     display_df["Current Price"] = display_df.apply(
         lambda r: f"{r['Current Price (native)']} {r['Currency']} → €{r['Current Price']}", axis=1
     )
