@@ -86,23 +86,26 @@ def build_portfolio_snapshot(holdings: list, period: str = "1y") -> pd.DataFrame
         # USD tickers have no exchange suffix (.AS, .DE, .PA, .L, .MI...)
         is_usd = "." not in ticker
 
-        # current_price is in native currency → convert USD to EUR
-        current_price_eur = current_price / eur_usd if is_usd else current_price
+        # Convert prices to EUR only for calculations
+        if is_usd:
+            current_price_eur = current_price / eur_usd
+            avg_price_eur = h["avg_price"] / eur_usd
+        else:
+            current_price_eur = current_price
+            avg_price_eur = h["avg_price"]
 
-        # avg_price is ALWAYS in EUR as entered by the user — never convert it
-        avg_price_eur = h["avg_price"]
-
-        cost_basis   = avg_price_eur * h["shares"]
+        cost_basis = avg_price_eur * h["shares"]
         market_value = current_price_eur * h["shares"]
-        pnl_abs      = market_value - cost_basis
-        pnl_pct      = (pnl_abs / cost_basis) * 100 if cost_basis else 0
+
+        pnl_abs = market_value - cost_basis
+        pnl_pct = (pnl_abs / cost_basis) * 100 if cost_basis else 0
 
         rows.append({
             "Ticker":                 ticker,
             "Name":                   h["name"],
             "Category":               h["category"],
             "Shares":                 h["shares"],
-            "Avg Price":              round(avg_price_eur, 4),
+            "Avg Price":              round(h["avg_price"], 4),
             "Current Price":          round(current_price_eur, 4),
             "Current Price (native)": round(current_price, 4),
             "Currency":               "USD" if is_usd else "EUR",
