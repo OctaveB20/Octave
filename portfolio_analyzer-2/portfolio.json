@@ -24,22 +24,15 @@
     {
       "ticker": "MU",
       "name": "Micron Technology",
-      "shares": 0.05589608,
-      "avg_price": 1052.49,
+      "shares": 0.16699261,
+      "avg_price": 969.15,
       "category": "Equity"
-    },
-    {
-      "ticker": "SPCX",
-      "name": "SpaceX",
-      "shares": 0.27590459,
-      "avg_price": 210.87,
-      "category": "Satellite"
     },
     {
       "ticker": "GOOGL",
       "name": "Alphabet (Class A)",
-      "shares": 1.11228168,
-      "avg_price": 334.58,
+      "shares": 1.70098954,
+      "avg_price": 341.57,
       "category": "Equity"
     },
     {
@@ -52,71 +45,64 @@
     {
       "ticker": "VWCE.AS",
       "name": "Vanguard FTSE All-World Acc",
-      "shares": 1.37584596,
-      "avg_price": 151.17,
+      "shares": 1.64778214,
+      "avg_price": 153.53,
       "category": "Core ETF"
     },
     {
       "ticker": "VUAA.DE",
       "name": "Vanguard S&P 500 Acc",
-      "shares": 3.35816458,
-      "avg_price": 116.23,
+      "shares": 3.94603101,
+      "avg_price": 117.92,
       "category": "Core ETF"
     },
     {
       "ticker": "FLXT.PA",
       "name": "Franklin FTSE Taiwan",
-      "shares": 4.42488522,
-      "avg_price": 54.45,
+      "shares": 6.196666,
+      "avg_price": 56.47,
       "category": "Satellite"
     },
     {
       "ticker": "JEDI.MI",
       "name": "VanEck Space Innovators",
-      "shares": 4.18507327,
-      "avg_price": 83.61,
+      "shares": 4.75053651,
+      "avg_price": 81.86,
       "category": "Satellite"
     },
     {
       "ticker": "QDVE.DE",
       "name": "iShares S&P 500 IT Sector",
-      "shares": 8.61481334,
-      "avg_price": 39.12,
+      "shares": 10.46047027,
+      "avg_price": 39.87,
       "category": "Core ETF"
-    },
-    {
-      "ticker": "QUTM.DE",
-      "name": "VanEck Quantum Computing",
-      "shares": 4.61452259,
-      "avg_price": 26.60,
-      "category": "Satellite"
     },
     {
       "ticker": "BNP.PA",
       "name": "BNP Paribas",
-      "shares": 3.87872095,
-      "avg_price": 85.3,
+      "shares": 4.89523085,
+      "avg_price": 88.34,
       "category": "Equity"
     },
     {
       "ticker": "DBXJ.DE",
       "name": "Xtrackers MSCI Japan",
-      "shares": 2.61687946,
-      "avg_price": 96.30,
+      "shares": 2.997151,
+      "avg_price": 96.87,
       "category": "Core ETF"
     },
     {
       "ticker": "ORCL",
       "name": "Oracle",
-      "shares": 0.67533291,
-      "avg_price": 141.93,
+      "shares": 1.89286808,
+      "avg_price": 143.46,
       "category": "Core ETF"
     },
     {
       "ticker": "LEMA.MI",
       "name": "Amundi MSCI Emerging Markets",
-      "shares": 3.97486866,
-      "avg_price": 71.19,
+      "shares": 5.8683009,
+      "avg_price": 72.08,
       "category": "Core ETF"
     }
   ],
